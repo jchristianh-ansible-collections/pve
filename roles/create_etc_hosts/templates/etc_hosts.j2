@@ -1,0 +1,18 @@
+# {{ template_run_date }}
+################################
+# {{ lab_template_header }} #
+################################
+#
+# Configuration    : {{ etc_hosts_file }}
+# Template Version : {{ etc_hosts_ver }}-{{ etc_hosts_rev }}
+#
+# {{ __project_maintainer }} <{{ __project_maintainer_email }}>
+#################################################
+
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+
+{% for node in r_hosts_inventory %}
+{{ node.address }}    {{ node.name }}    {{ node.name }}.{{ __pve_tld }}
+{% endfor %}

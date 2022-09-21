@@ -1,0 +1,71 @@
+---
+- name: Wait for VM creation...
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/\
+                      {{ item.vmid }}/status/current"
+    method          : GET
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      vmid          : "{{ item.vmid }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_wait_for_vm
+  loop              : "{{ lab_nodes }}"
+  loop_control      :
+    label           : "{{ item.name }}"
+  until             : r_wait_for_vm.status == 200 and r_wait_for_vm.json.data.status is defined
+  retries           : "{{ __api_retries }}"
+  delay             : "{{ __api_polling }}"
+
+
+- name: Get current VM configuration
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/\
+                      {{ item.vmid }}/config"
+    method          : GET
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      vmid          : "{{ item.vmid }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_get_vm_config
+  loop              : "{{ lab_nodes }}"
+  loop_control      :
+    label           : "{{ item.name }}"
+  until             : r_get_vm_config.status == 200 and r_get_vm_config.json.data.net0 is defined
+  retries           : "{{ __api_retries }}"
+  delay             : "{{ __api_polling }}"
+
+
+- name: Process configuration data
+  set_fact:
+    r_setup_config_data: "{{ lookup('template', 'vm_config_lookup.j2') }}"
+
+
+- name: Configure VMs
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/\
+                        {{ item.vmid }}/config"
+    method          : POST
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+    body_format     : form-urlencoded
+    body            :
+      vmid          : "{{ item.vmid }}"
+      cores         : "{{ item.cores        | default(__lab_cores_default)        }}"
+      memory        : "{{ '{0:0.0f}'.format(item.mem|default(__lab_mem_default) * 1024)|int }}"
+      net0          : "virtio={{ item.mac_addr}},bridge={{ __lab_bridge }},tag={{ __lab_vlan }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_config_vm
+  loop              : "{{ r_setup_config_data }}"
+  loop_control      :
+    label           : "{{ item.name }}"
+  when              :
+    - item.status == 'stopped'|lower
+
+
+...

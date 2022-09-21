@@ -1,0 +1,45 @@
+---
+- name: Fetch VM list from API
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/{{ item.vmid }}/config"
+    method          : GET
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      node          : "{{ item.vm_host | default(__pve_node) }}"
+    return_content  : no
+    validate_certs  : no
+    status_code     :
+      - 200
+      - 500
+  register          : r_get_vm_list
+  loop              : "{{ lab_nodes }}"
+  loop_control      :
+    label           : "{{ item.name }}"
+
+
+- name: Create VMs
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ __pve_node }}/qemu/\
+                      {{ item.item.vm_template_id | default(__vm_tmpl_id) }}/clone"
+    method          : POST
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+    body_format     : form-urlencoded
+    body:
+      vmid          : "{{ item.item.vm_template_id | default(__vm_tmpl_id) }}"
+      newid         : "{{ item.item.vmid }}"
+      name          : "{{ item.item.name }}"
+      target        : "{{ item.item.vm_host | default(__pve_node) }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_create_vm
+  loop              : "{{ r_get_vm_list.results }}"
+  loop_control      :
+    label           : "{{ item.item.name }}"
+  when              :
+    - item.status == 500
+
+
+...

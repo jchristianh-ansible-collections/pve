@@ -1,0 +1,41 @@
+---
+- name: Verify VM status
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/{{ item.vmid }}/status/current"
+    method          : GET
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      node          : "{{ item.vm_host | default(__pve_node) }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_wait_status
+  loop              : "{{ lab_nodes }}"
+  loop_control      :
+    label           : "{{ item.name }}"
+  until             : r_wait_status.json.data.status == 'stopped'|lower
+  retries           : "{{ __api_retries }}"
+  delay             : "{{ __api_polling }}"
+
+
+- name: Destroy VMs
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.item.vm_host | default(__pve_node) }}/qemu/{{ item.item.vmid }}"
+    method          : DELETE
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      node          : "{{ item.vm_host | default(__pve_node) }}"
+      vmid          : "{{ item.item.vmid }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_delete_vm
+  loop              : "{{ r_wait_status.results }}"
+  loop_control      :
+    label           : "{{ item.json.data.name }}"
+  when              :
+    - item.json.data is defined
+    - item.json.data.status == 'stopped'|lower
+
+
+...

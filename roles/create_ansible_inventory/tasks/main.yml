@@ -1,0 +1,26 @@
+---
+- name: Create inventory for Environment
+  block:
+    - name: Write inventory
+      template :
+        src    : "{{ lab_inv_tmpl }}"
+        dest   : "{{ lab_inv_dest }}/{{ lab_inv_file }}"
+
+  rescue:
+    - name: Pause for 10s
+      pause:
+        seconds: 10
+
+
+    - name: Fetch VM info
+      include_role:
+        name: jchristianh.pve.get_vm_ipaddr
+
+
+    - name: Write inventory
+      template :
+        src    : "{{ lab_inv_tmpl }}"
+        dest   : "{{ lab_inv_dest }}/{{ lab_inv_file }}"
+
+
+...

@@ -1,0 +1,9 @@
+---
+- name: Generate SSH keypair for Environment
+  community.crypto.openssh_keypair:
+    path: "{{ __ssh_keypair_dest }}/{{ __ssh_keypair_name }}"
+    type: "{{ __ssh_keypair_type }}"
+    size: "{{ __ssh_keypair_size|int }}"
+
+
+...

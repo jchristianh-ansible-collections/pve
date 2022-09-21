@@ -1,0 +1,60 @@
+# {{ lab_template_header }} Inventory
+#################################################
+#
+# Configuration    : {{ lab_inv_file }}
+# Template Version : {{ lab_inv_ver }}-{{ lab_inv_rev }}
+#
+# {{ __project_maintainer }} <{{ __project_maintainer_email }}>
+#################################################
+
+
+#########################
+# Environment Overview  #
+# --------------------  #
+# KEY:                  #
+#   Node :: Group :: IP #
+#########################
+{% for node in r_hosts_inventory %}
+# {{ node.name }} :: {{ node.group }} :: {{ node.address }} :: {{ node.vm_host }}
+{% endfor %}
+
+
+
+###################
+### HOST GROUPS ###
+###################
+{% for group in lab_groups %}
+[{{ group }}]
+{% for node in r_hosts_inventory %}
+{% if node.group == group %}
+{{ node.name }}  ansible_host={{ node.address }}
+{% endif %}
+{% endfor %}
+
+{% endfor %}
+
+
+{% if lab_parents is defined %}
+#################
+### SUBGROUPS ###
+#################
+{% for parent in lab_parents %}
+[{{ parent }}:children]
+{% for group in lab_parents[parent].groups %}
+{{ group }}
+{% endfor %}
+
+[{{ parent }}:vars]
+{% for var in lab_parents[parent].vars %}
+{{ var }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+
+
+# vars for all hosts/groups
+[all:vars]
+{% if __use_bastion is defined and __use_bastion|bool %}
+ansible_ssh_common_args='-J {{ __bastion_user }}@{{ __bastion_host }}'
+{% endif %}

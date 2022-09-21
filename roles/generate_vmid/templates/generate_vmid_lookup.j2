@@ -1,0 +1,13 @@
+[
+{% for lab_node in lab_nodes %}
+  {
+      "name"           : "{{ lab_node.name                                                     }}",
+      "vmid"           : "{{ lab_vmid_base           + (loop.index - 1)                        }}",
+      "vm_host"        : "{{ lab_node.vm_host        | default(__pve_node)                     }}",
+      "vm_template_id" : "{{ lab_node.vm_template_id | default(__vm_tmpl_id)                   }}",
+      "group"          : "{{ lab_node.group          | default(__default_inventory_group)      }}",
+      "cores"          : "{{ lab_node.cores          | default(__lab_cores_default)            }}",
+      "mem"            :  {{ lab_node.mem            | default(__lab_mem_default)              }},
+  },
+{% endfor %}
+]

@@ -1,0 +1,44 @@
+---
+- name: Check if desired snapshot exists in PVE
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/{{ item.vmid }}/snapshot/{{ __lab_snapshot_name }}/config"
+    method          : GET
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      node          : "{{ item.vm_host | default(__pve_node) }}"
+      vmid          : "{{ item.vmid }}"
+    return_content  : no
+    validate_certs  : no
+    status_code     :
+      - 200
+      - 500
+  register          : r_snapshot_list
+  loop              : "{{ lab_nodes }}"
+  loop_control      :
+    label           : "{{ item.name }}"
+
+
+- name: Create VM snapshot if one doesn't exist
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.item.vm_host | default(__pve_node) }}/qemu/{{ item.item.vmid }}/snapshot"
+    method          : POST
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+    body_format     : form-urlencoded
+    body            :
+      node          : "{{ item.item.vm_host | default(__pve_node) }}"
+      vmid          : "{{ item.item.vmid }}"
+      snapname      : "{{ __lab_snapshot_name }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_snapshot_create
+  loop              : "{{ r_snapshot_list.results }}"
+  loop_control      :
+    label           : "[{{ item.item.vmid }}] {{ item.item.name }}"
+  when              :
+    - item.msg is search("Error")
+
+
+...

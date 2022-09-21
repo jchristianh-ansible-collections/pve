@@ -1,0 +1,35 @@
+---
+#- name: Generate and associate VMID to VM
+#  set_fact     :
+#    lab_nodes  :
+#      "{{ lab_nodes | combine({ item.name: {'vmid': lab_vmid_base + idx_lab_nodes} }, recursive=True) }}"
+#  loop         : "{{ lab_nodes }}"
+#  loop_control :
+#    label      : "{{ item.name }}"
+#    index_var  : idx_lab_nodes
+
+
+#- name: Debug lab_nodes
+#  debug :
+#    var : lab_nodes
+
+
+- name: Generate and associate VMID to VM
+  set_fact:
+    lab_nodes: "{{ lookup('template', 'generate_vmid_lookup.j2') }}"
+
+
+#- name: Debug lab_nodes
+#  debug :
+#    var : lab_nodes
+
+
+#- name: Debug lab_nodes again
+#  debug :
+#    msg : "{{ item.name }} -> {{ item.vmid }}"
+#  loop: "{{ lab_nodes }}"
+#  loop_control:
+#    label: "{{ item.name }}"
+
+
+...

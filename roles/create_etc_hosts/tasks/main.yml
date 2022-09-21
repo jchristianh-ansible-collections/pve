@@ -1,0 +1,26 @@
+---
+- name: Create /etc/hosts for Environment
+  block:
+    - name: "Write /etc/hosts file to {{ etc_hosts_dest }}"
+      template :
+        src    : "{{ etc_hosts_tmpl }}"
+        dest   : "{{ etc_hosts_dest }}"
+
+  rescue:
+    - name: Pause for 10s
+      pause:
+        seconds: 10
+
+
+    - name: Fetch VM info
+      include_role:
+        name: jchristianh.pve.get_vm_ipaddr
+
+
+    - name: "Write /etc/hosts file to {{ etc_hosts_dest }}"
+      template :
+        src    : "{{ etc_hosts_tmpl }}"
+        dest   : "{{ etc_hosts_dest }}"
+
+
+...

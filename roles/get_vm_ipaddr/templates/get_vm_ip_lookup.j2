@@ -1,0 +1,19 @@
+[
+{% for node in r_network_interfaces.results %}
+  {
+    "name"    : "{{ node.item.name }}",
+    "vmid"    : "{{ node.item.vmid }}",
+    "vm_host" : "{{ node.item.vm_host | default(__pve_node) }}",
+    "group"   : "{{ node.item.group }}",
+{% for interfaces in node.json.data.result %}
+{% if interfaces.name != 'lo' %}
+{% for addr in interfaces["ip-addresses"] %}
+{% if addr["ip-address-type"] == "ipv4" %}
+    "address" : "{{ addr["ip-address"] }}",
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+  },
+{% endfor %}
+]

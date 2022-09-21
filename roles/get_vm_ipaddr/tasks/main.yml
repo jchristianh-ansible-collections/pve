@@ -1,0 +1,55 @@
+---
+- name: Get network info from API
+  uri:
+    url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/{{ item.vmid }}/agent/network-get-interfaces"
+    method          : GET
+    headers         :
+      Content-type  : "application/x-www-form-urlencoded"
+      Authorization : "{{ __pve_token }}"
+      node          : "{{ item.vm_host | default(__pve_node) }}"
+      vmid          : "{{ item.vmid }}"
+    return_content  : no
+    validate_certs  : no
+  register          : r_network_interfaces
+  loop              : "{{ lab_nodes }}"
+  loop_control:
+    label           : "{{ item.name }}"
+  until             : r_network_interfaces.status == 200
+  retries           : "{{ __api_retries }}"
+  delay             : "{{ __api_polling }}"
+
+
+- name: Process API information
+  block:
+    - name: Process results from API
+      set_fact:
+        r_hosts_inventory: "{{ lookup('template', 'get_vm_ip_lookup.j2') }}"
+
+
+  rescue:
+    - name: Retry fetching network info from API
+      uri:
+        url             : "{{ __pve_endpoint }}/nodes/{{ item.vm_host | default(__pve_node) }}/qemu/{{ item.vmid }}/agent/network-get-interfaces"
+        method          : GET
+        headers         :
+          Content-type  : "application/x-www-form-urlencoded"
+          Authorization : "{{ __pve_token }}"
+          node          : "{{ item.vm_host | default(__pve_node) }}"
+          vmid          : "{{ item.vmid }}"
+        return_content  : no
+        validate_certs  : no
+      register          : r_network_interfaces
+      loop              : "{{ lab_nodes }}"
+      loop_control:
+        label           : "{{ item.name }}"
+      until             : r_network_interfaces.status == 200
+      retries           : "{{ __api_retries }}"
+      delay             : "{{ __api_polling }}"
+
+
+    - name: Process results from API
+      set_fact:
+        r_hosts_inventory: "{{ lookup('template', 'get_vm_ip_lookup.j2') }}"
+
+
+...

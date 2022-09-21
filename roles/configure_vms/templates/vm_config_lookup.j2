@@ -1,0 +1,17 @@
+[
+{% for vm_wait in r_wait_for_vm.results %}
+{% for vm_config in r_get_vm_config.results %}
+{% if vm_wait.item.name == vm_config.item.name %}
+{
+  "name"     : "{{ vm_config.item.name }}",
+  "vmid"     : "{{ vm_config.item.vmid }}",
+  "vm_host"  : "{{ vm_config.item.vm_host }}",
+  "status"   : "{{ vm_wait.json.data.status }}",
+  "cores"    : "{{ vm_config.item.cores }}",
+  "mem"      : {{ vm_config.item.mem }},
+  "mac_addr" : "{{ vm_config.json.data.net0 | regex_replace('^virtio=(.*),bridge=.*$','\\1') }}",
+},
+{% endif %}
+{% endfor %}
+{% endfor %}
+]
