@@ -55,6 +55,6 @@
 
 # vars for all hosts/groups
 [all:vars]
-{% if __use_bastion is defined and __use_bastion|bool %}
+{% if __bastion_user is defined and __bastion_host is defined %}
 ansible_ssh_common_args='-J {{ __bastion_user }}@{{ __bastion_host }}'
 {% endif %}
